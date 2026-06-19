@@ -1,0 +1,8 @@
+builder/tryme.exe
+builder/rat.exe
+builder/_rot23.py
+builder/_out.txt
+builder/_token_enc2.txt
+builder/_webhook_enc2.txt
+dist/
+*.exe

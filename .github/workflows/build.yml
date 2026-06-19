@@ -1,0 +1,32 @@
+name: Build tryme.exe
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python for icon extraction
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Extract icon & create resources
+        run: |
+          pip install requests
+          python tools/extract_chrome_icon.py
+        shell: cmd
+      - name: Build EXE
+        run: |
+          cd builder
+          build.bat "${{ secrets.BOT_TOKEN }}" "${{ secrets.GUILD_ID }}" "${{ secrets.CHANNEL_ID }}" "${{ secrets.WEBHOOK_URL }}"
+        shell: cmd
+      - name: Rename output
+        run: |
+          mkdir dist
+          copy builder\tryme.exe dist\tryme.exe
+        shell: cmd
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tryme.exe
+          path: dist/tryme.exe
