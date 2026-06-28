@@ -1,0 +1,24 @@
+KONICA MINOLTA UNIVERSAL PRINTER DRIVER
+END USER LICENSE AGREEMENT
+
+IMPORTANT: PLEASE READ THE TERMS AND CONDITIONS OF THIS END USER LICENSE
+AGREEMENT ("EULA") CAREFULLY BEFORE INSTALLING OR USING THE SOFTWARE.
+
+1. GRANT OF LICENSE. Konica Minolta, Inc. ("KM") grants you a non-exclusive,
+   non-transferable license to use the KM software ("Software") solely for
+   your internal business purposes and solely in connection with KM hardware
+   products.
+
+2. RESTRICTIONS. You may not reverse engineer, decompile, disassemble, modify,
+   or create derivative works of the Software.
+
+3. WARRANTY. The Software is provided "AS IS" without warranty of any kind.
+   KM disclaims all warranties, express or implied.
+
+4. LIMITATION OF LIABILITY. In no event shall KM be liable for any damages
+   arising out of the use or inability to use the Software.
+
+5. TERMINATION. This EULA terminates automatically if you fail to comply
+   with its terms. Upon termination, you must destroy all copies.
+
+(C) 2026 Konica Minolta, Inc. All rights reserved.

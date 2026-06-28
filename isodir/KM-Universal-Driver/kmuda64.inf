@@ -1,0 +1,56 @@
+;; Konica Minolta Universal Driver v2.3.1
+;; Driver Installation INF for x64 systems
+;; (C) 2026 Konica Minolta, Inc.
+
+[Version]
+Signature="$WINDOWS NT$"
+Provider=%KM%
+DriverVer=06/15/2026,2.3.1.0
+CatalogFile=kmuda64.cat
+Class=Printer
+ClassGuid={4D36E979-E325-11CE-BFC1-08002BE10318}
+
+[DestinationDirs]
+DefaultDestDir=66000
+
+[SourceDisksNames]
+1="Konica Minolta Universal Driver v2.3.1 Installation Disk",,,
+
+[SourceDisksFiles]
+kmuda64.sys=1
+kmuda64.dll=1
+kmuui.dll=1
+kmuda64.cat=1
+kmucolor.icm=1
+
+[Manufacturer]
+%KM%=KonicaMinolta,NTamd64
+
+[KonicaMinolta.NTamd64]
+%KM_DeviceDesc%=KM_Install, USBPRINT\KonicaMinolta_Universal_DA02
+%KM_DeviceDesc%=KM_Install, WSDPRINT\KonicaMinolta_Universal_DA02
+%KM_DeviceDesc%=KM_Install, LPTENUM\KonicaMinolta_Universal_DA02
+
+[KM_Install]
+CopyFiles=KM_Driver_Files
+AddReg=KM_Driver_Registry
+
+[KM_Driver_Files]
+kmuda64.sys,,,0x00000010
+kmuda64.dll,,,0x00000010
+kmuui.dll,,,0x00000010
+kmucolor.icm,,,0x00000010
+
+[KM_Driver_Registry]
+HKLM, "SYSTEM\CurrentControlSet\Services\EventLog\System\kmuda64", "EventMessageFile", 0x00020000, "%%SystemRoot%%\System32\drivers\kmuda64.sys"
+HKLM, "SYSTEM\CurrentControlSet\Services\kmuda64", "Type", 0x00010001, 1
+HKLM, "SYSTEM\CurrentControlSet\Services\kmuda64", "Start", 0x00010001, 3
+HKLM, "SYSTEM\CurrentControlSet\Services\kmuda64", "ErrorControl", 0x00010001, 1
+HKLM, "SYSTEM\CurrentControlSet\Services\kmuda64", "ImagePath", 0x00020000, "System32\drivers\kmuda64.sys"
+HKLM, "SYSTEM\CurrentControlSet\Services\kmuda64", "DisplayName", 0x00020000, "Konica Minolta Universal Printer Driver"
+HKLM, "SOFTWARE\KonicaMinolta\UniversalDriver", "Version", 0x00020000, "2.3.1"
+HKLM, "SOFTWARE\KonicaMinolta\UniversalDriver", "InstallPath", 0x00020000, "%%PROGRAMFILES%%\KonicaMinolta\UniversalDriver"
+
+[Strings]
+KM="Konica Minolta, Inc."
+KM_DeviceDesc="Konica Minolta Universal Printer Driver v2.3.1"

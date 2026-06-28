@@ -1,3 +1,5 @@
 dist/
 *.exe
 *.iso
+*.log
+*.tmp

